@@ -301,9 +301,9 @@ static bool SpeedSIKEP503(const std::string &selected) {
     return true;
   }
   // speed generation
-  uint8_t public_SIKE[SIKEp503_PUB_BYTESZ];
-  uint8_t private_SIKE[SIKEp503_PRV_BYTESZ];
-  uint8_t ct[SIKEp503_CT_BYTESZ];
+  uint8_t public_SIKE[SIKE_PUB_BYTESZ];
+  uint8_t private_SIKE[SIKE_PRV_BYTESZ];
+  uint8_t ct[SIKE_CT_BYTESZ];
   bool res;
 
   {
@@ -324,7 +324,7 @@ static bool SpeedSIKEP503(const std::string &selected) {
     TimeResults results;
     TimeFunction(&results,
                 [&ct, &public_SIKE]() -> bool {
-      uint8_t ss[SIKEp503_SS_BYTESZ];
+      uint8_t ss[SIKE_SS_BYTESZ];
       SIKE_encaps(ss, ct, public_SIKE);
       return true;
     });
@@ -340,7 +340,7 @@ static bool SpeedSIKEP503(const std::string &selected) {
     TimeResults results;
     TimeFunction(&results,
                 [&ct, &public_SIKE, &private_SIKE]() -> bool {
-      uint8_t ss[SIKEp503_SS_BYTESZ];
+      uint8_t ss[SIKE_SS_BYTESZ];
       SIKE_decaps(ss, ct, public_SIKE, private_SIKE);
       return true;
     });

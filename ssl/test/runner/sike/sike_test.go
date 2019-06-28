@@ -629,7 +629,7 @@ func TestDecapsulation(t *testing.T) {
    Benchmarking
    -------------------------------------------------------------------------*/
 
-func BenchmarkSidhKeyAgreementP503(b *testing.B) {
+func BenchmarkSidhKeyAgreement(b *testing.B) {
 	// KeyPairs
 	alicePublic := convToPub(tdata.PkA_sike, KeyVariant_SIDH_A)
 	alicePrivate := convToPrv(tdata.PrA_sike, KeyVariant_SIDH_A)
@@ -643,21 +643,21 @@ func BenchmarkSidhKeyAgreementP503(b *testing.B) {
 	}
 }
 
-func BenchmarkAliceKeyGenPrvP503(b *testing.B) {
+func BenchmarkAliceKeyGenPrv(b *testing.B) {
 	prv := NewPrivateKey(KeyVariant_SIDH_A)
 	for n := 0; n < b.N; n++ {
 		prv.Generate(rand.Reader)
 	}
 }
 
-func BenchmarkBobKeyGenPrvP503(b *testing.B) {
+func BenchmarkBobKeyGenPrv(b *testing.B) {
 	prv := NewPrivateKey(KeyVariant_SIDH_B)
 	for n := 0; n < b.N; n++ {
 		prv.Generate(rand.Reader)
 	}
 }
 
-func BenchmarkAliceKeyGenPubP503(b *testing.B) {
+func BenchmarkAliceKeyGenPub(b *testing.B) {
 	prv := NewPrivateKey(KeyVariant_SIDH_A)
 	prv.Generate(rand.Reader)
 	for n := 0; n < b.N; n++ {
@@ -665,7 +665,7 @@ func BenchmarkAliceKeyGenPubP503(b *testing.B) {
 	}
 }
 
-func BenchmarkBobKeyGenPubP503(b *testing.B) {
+func BenchmarkBobKeyGenPub(b *testing.B) {
 	prv := NewPrivateKey(KeyVariant_SIDH_B)
 	prv.Generate(rand.Reader)
 	for n := 0; n < b.N; n++ {
@@ -673,7 +673,7 @@ func BenchmarkBobKeyGenPubP503(b *testing.B) {
 	}
 }
 
-func BenchmarkSharedSecretAliceP503(b *testing.B) {
+func BenchmarkSharedSecretAlice(b *testing.B) {
 	aPr := convToPrv(tdata.PrA_sike, KeyVariant_SIDH_A)
 	bPk := convToPub(tdata.PkB_sike, KeyVariant_SIDH_B)
 	for n := 0; n < b.N; n++ {
@@ -681,7 +681,7 @@ func BenchmarkSharedSecretAliceP503(b *testing.B) {
 	}
 }
 
-func BenchmarkSharedSecretBobP503(b *testing.B) {
+func BenchmarkSharedSecretBob(b *testing.B) {
 	// m_B = 3*randint(0,3^238)
 	aPk := convToPub(tdata.PkA_sike, KeyVariant_SIDH_A)
 	bPr := convToPrv(tdata.PrB_sidh, KeyVariant_SIDH_B)

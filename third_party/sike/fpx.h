@@ -7,13 +7,13 @@
 extern "C" {
 #endif
 
-// Modular addition, c = a+b mod p503.
+// Modular addition, c = a+b mod p.
 void sike_fpadd(const felm_t a, const felm_t b, felm_t c);
-// Modular subtraction, c = a-b mod p503.
+// Modular subtraction, c = a-b mod p.
 void sike_fpsub(const felm_t a, const felm_t b, felm_t c);
-// Modular division by two, c = a/2 mod p503.
+// Modular division by two, c = a/2 mod p.
 void sike_fpdiv2(const felm_t a, felm_t c);
-// Modular correction to reduce field element a in [0, 2*p503-1] to [0, p503-1].
+// Modular correction to reduce field element a in [0, 2*p-1] to [0, p-1].
 void sike_fpcorrection(felm_t a);
 // Multiprecision multiply, c = a*b, where lng(a) = lng(b) = nwords.
 void sike_mpmul(const felm_t a, const felm_t b, dfelm_t c);
@@ -25,7 +25,7 @@ void sike_mpdblsubx2_asm(const felm_t a, const felm_t b, felm_t c);
 crypto_word_t sike_mpsubx2_asm(const dfelm_t a, const dfelm_t b, dfelm_t c);
 // 503-bit multiprecision addition, c = a+b
 void sike_mpadd_asm(const felm_t a, const felm_t b, felm_t c);
-// Modular negation, a = -a mod p503.
+// Modular negation, a = -a mod p.
 void sike_fpneg(felm_t a);
 // Copy of a field element, c = a
 void sike_fpcopy(const felm_t a, felm_t c);
@@ -97,8 +97,8 @@ do {                                     \
 // mc_i = a_i*R^2*R^(-1) = a_i*R in GF(p^2).
 #define sike_to_fp2mont(a, mc)           \
 do {                                     \
-    sike_fpmul_mont(a->c0, p503.mont_R2, mc->c0);   \
-    sike_fpmul_mont(a->c1, p503.mont_R2, mc->c1);   \
+    sike_fpmul_mont(a->c0, params.mont_R2, mc->c0);   \
+    sike_fpmul_mont(a->c1, params.mont_R2, mc->c1);   \
 } while(0)
 
 // Conversion of a GF(p^2) element from Montgomery representation to standard representation,

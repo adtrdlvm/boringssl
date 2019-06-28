@@ -1,13 +1,13 @@
 /********************************************************************************************
 * SIDH: an efficient supersingular isogeny cryptography library
 *
-* Abstract: supersingular isogeny parameters and generation of functions for P503
+* Abstract: supersingular isogeny parameters and generation of functions for P434
 *********************************************************************************************/
 
 #include "utils.h"
 
-// Parameters for isogeny system "SIKEp503"
-const struct params_t p503 = {
+// Parameters for isogeny system "SIKE"
+const struct params_t params = {
     .prime = {
         U64_TO_WORDS(0xFFFFFFFFFFFFFFFF), U64_TO_WORDS(0xFFFFFFFFFFFFFFFF),
         U64_TO_WORDS(0xFFFFFFFFFFFFFFFF), U64_TO_WORDS(0xABFFFFFFFFFFFFFF),

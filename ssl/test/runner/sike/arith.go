@@ -22,22 +22,22 @@ import (
 func fpAddRdc(z, x, y *Fp) {
 	var carry uint64
 
-	// z=x+y % p503
+	// z=x+y % p
 	for i := 0; i < FP_WORDS; i++ {
 		z[i], carry = bits.Add64(x[i], y[i], carry)
 	}
 
-	// z = z - p503x2
+	// z = z - pX2
 	carry = 0
 	for i := 0; i < FP_WORDS; i++ {
-		z[i], carry = bits.Sub64(z[i], p503x2[i], carry)
+		z[i], carry = bits.Sub64(z[i], pX2[i], carry)
 	}
 
-	// if z<0 add p503x2 back
+	// if z<0 add pX2 back
 	mask := uint64(0 - carry)
 	carry = 0
 	for i := 0; i < FP_WORDS; i++ {
-		z[i], carry = bits.Add64(z[i], p503x2[i]&mask, carry)
+		z[i], carry = bits.Add64(z[i], pX2[i]&mask, carry)
 	}
 }
 
@@ -45,16 +45,16 @@ func fpAddRdc(z, x, y *Fp) {
 func fpSubRdc(z, x, y *Fp) {
 	var borrow uint64
 
-	// z = z - p503x2
+	// z = z - pX2
 	for i := 0; i < FP_WORDS; i++ {
 		z[i], borrow = bits.Sub64(x[i], y[i], borrow)
 	}
 
-	// if z<0 add p503x2 back
+	// if z<0 add pX2 back
 	mask := uint64(0 - borrow)
 	borrow = 0
 	for i := 0; i < FP_WORDS; i++ {
-		z[i], borrow = bits.Add64(z[i], p503x2[i]&mask, borrow)
+		z[i], borrow = bits.Add64(z[i], pX2[i]&mask, borrow)
 	}
 }
 
@@ -62,14 +62,14 @@ func fpSubRdc(z, x, y *Fp) {
 func fpRdcP(x *Fp) {
 	var borrow, mask uint64
 	for i := 0; i < FP_WORDS; i++ {
-		x[i], borrow = bits.Sub64(x[i], p503[i], borrow)
+		x[i], borrow = bits.Sub64(x[i], p[i], borrow)
 	}
 
 	// Sets all bits if borrow = 1
 	mask = 0 - borrow
 	borrow = 0
 	for i := 0; i < FP_WORDS; i++ {
-		x[i], borrow = bits.Add64(x[i], p503[i]&mask, borrow)
+		x[i], borrow = bits.Add64(x[i], p[i]&mask, borrow)
 	}
 }
 
@@ -123,12 +123,12 @@ func fpMontRdc(z *Fp, x *FpX2) {
 	var hi, lo uint64
 	var count int
 
-	count = 3 // number of 0 digits in the least significat part of p503 + 1
+	count = 3 // number of 0 digits in the least significat part of p + 1
 
 	for i := 0; i < FP_WORDS; i++ {
 		for j := 0; j < i; j++ {
 			if j < (i - count + 1) {
-				hi, lo = bits.Mul64(z[j], p503p1[i-j])
+				hi, lo = bits.Mul64(z[j], p1[i-j])
 				v, carry = bits.Add64(lo, v, 0)
 				u, carry = bits.Add64(hi, u, carry)
 				t += carry
@@ -150,7 +150,7 @@ func fpMontRdc(z *Fp, x *FpX2) {
 		}
 		for j := i - FP_WORDS + 1; j < FP_WORDS; j++ {
 			if j < (FP_WORDS - count) {
-				hi, lo = bits.Mul64(z[j], p503p1[i-j])
+				hi, lo = bits.Mul64(z[j], p1[i-j])
 				v, carry = bits.Add64(lo, v, 0)
 				u, carry = bits.Add64(hi, u, carry)
 				t += carry
@@ -188,7 +188,7 @@ func fp2Sub(z, x, y *FpX2) {
 	mask = 0 - borrow
 	borrow = 0
 	for i := FP_WORDS; i < 2*FP_WORDS; i++ {
-		z[i], borrow = bits.Add64(z[i], p503[i-FP_WORDS]&mask, borrow)
+		z[i], borrow = bits.Add64(z[i], p[i-FP_WORDS]&mask, borrow)
 	}
 }
 

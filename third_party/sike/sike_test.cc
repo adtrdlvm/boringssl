@@ -21,27 +21,27 @@
 #include "fpx.h"
 
 TEST(SIKE, RoundTrip) {
-    uint8_t sk[SIKEp503_PRV_BYTESZ] = {0};
-    uint8_t pk[SIKEp503_PUB_BYTESZ] = {0};
-    uint8_t ct[SIKEp503_CT_BYTESZ] = {0};
-    uint8_t ss_enc[SIKEp503_SS_BYTESZ] = {0};
-    uint8_t ss_dec[SIKEp503_SS_BYTESZ] = {0};
+    uint8_t sk[SIKE_PRV_BYTESZ] = {0};
+    uint8_t pk[SIKE_PUB_BYTESZ] = {0};
+    uint8_t ct[SIKE_CT_BYTESZ] = {0};
+    uint8_t ss_enc[SIKE_SS_BYTESZ] = {0};
+    uint8_t ss_dec[SIKE_SS_BYTESZ] = {0};
 
     EXPECT_EQ(SIKE_keypair(sk, pk), 1);
     SIKE_encaps(ss_enc, ct, pk);
     SIKE_decaps(ss_dec, ct, pk, sk);
 
-    EXPECT_EQ(memcmp(ss_enc, ss_dec, SIKEp503_SS_BYTESZ), 0);
+    EXPECT_EQ(memcmp(ss_enc, ss_dec, SIKE_SS_BYTESZ), 0);
 }
 
 TEST(SIKE, Decapsulation) {
-    const uint8_t sk[SIKEp503_PRV_BYTESZ] = {
+    const uint8_t sk[SIKE_PRV_BYTESZ] = {
         0xDB, 0xAF, 0x2C, 0x89, 0xCA, 0x5A, 0xD4, 0x9D, 0x4F, 0x13,
         0x40, 0xDF, 0x2D, 0xB1, 0x5F, 0x4C, 0x91, 0xA7, 0x1F, 0x0B,
         0x29, 0x15, 0x01, 0x59, 0xBC, 0x5F, 0x0B, 0x4A, 0x03, 0x27,
         0x6F, 0x18};
 
-    const uint8_t pk[SIKEp503_PUB_BYTESZ] = {
+    const uint8_t pk[SIKE_PUB_BYTESZ] = {
         0x07, 0xAA, 0x51, 0x45, 0x3E, 0x1F, 0x53, 0x2A, 0x0A, 0x05,
         0x46, 0xF6, 0x54, 0x7F, 0x5D, 0x56, 0xD6, 0x76, 0xD3, 0xEA,
         0x4B, 0x6B, 0x01, 0x9B, 0x11, 0x72, 0x6F, 0x75, 0xEA, 0x34,
@@ -81,7 +81,7 @@ TEST(SIKE, Decapsulation) {
         0xB6, 0x00, 0xED, 0xFA, 0x32, 0x1A, 0x5F, 0x67, 0xC8, 0xC3,
         0xEB, 0x0D, 0xB5, 0x9A, 0x36, 0x47, 0x82, 0x00};
 
-    const uint8_t ct_exp[SIKEp503_CT_BYTESZ] = {
+    const uint8_t ct_exp[SIKE_CT_BYTESZ] = {
         0xE6, 0xB7, 0xE5, 0x7B, 0xA9, 0x19, 0xD1, 0x2C, 0xB8, 0x5C,
         0x7B, 0x66, 0x74, 0xB0, 0x71, 0xA1, 0xFF, 0x71, 0x7F, 0x4B,
         0xB5, 0xA6, 0xAF, 0x48, 0x32, 0x52, 0xD5, 0x82, 0xEE, 0x8A,
@@ -124,21 +124,21 @@ TEST(SIKE, Decapsulation) {
         0x75, 0x37, 0x46, 0x10, 0x12, 0x2F, 0x4F, 0xA3, 0x82, 0xCD,
         0xBD, 0x7C};
 
-    const uint8_t ss_exp[SIKEp503_SS_BYTESZ] = {
+    const uint8_t ss_exp[SIKE_SS_BYTESZ] = {
         0x74, 0x3D, 0x25, 0x36, 0x00, 0x24, 0x63, 0x1A, 0x39, 0x1A,
         0xB4, 0xAD, 0x01, 0x17, 0x78, 0xE9};
 
-    uint8_t ss_dec[SIKEp503_SS_BYTESZ] = {0};
+    uint8_t ss_dec[SIKE_SS_BYTESZ] = {0};
     SIKE_decaps(ss_dec, ct_exp, pk, sk);
     EXPECT_EQ(memcmp(ss_dec, ss_exp, sizeof(ss_exp)), 0);
 }
 
 // SIKE_encaps and SIKE_keypair doesn't return zeros.
 TEST(SIKE, NonZero) {
-    uint8_t sk[SIKEp503_PRV_BYTESZ] = {0};
-    uint8_t pk[SIKEp503_PUB_BYTESZ] = {0};
-    uint8_t ct[SIKEp503_CT_BYTESZ] = {0};
-    uint8_t ss[SIKEp503_SS_BYTESZ] = {0};
+    uint8_t sk[SIKE_PRV_BYTESZ] = {0};
+    uint8_t pk[SIKE_PUB_BYTESZ] = {0};
+    uint8_t ct[SIKE_CT_BYTESZ] = {0};
+    uint8_t ss[SIKE_SS_BYTESZ] = {0};
 
     // Check secret and public key returned by SIKE_keypair
     EXPECT_EQ(SIKE_keypair(sk, pk), 1);
@@ -162,49 +162,49 @@ TEST(SIKE, NonZero) {
 }
 
 TEST(SIKE, Negative) {
-    uint8_t sk[SIKEp503_PRV_BYTESZ] = {0};
-    uint8_t pk[SIKEp503_PUB_BYTESZ] = {0};
-    uint8_t ct[SIKEp503_CT_BYTESZ] = {0};
-    uint8_t ss_enc[SIKEp503_SS_BYTESZ] = {0};
-    uint8_t ss_dec[SIKEp503_SS_BYTESZ] = {0};
+    uint8_t sk[SIKE_PRV_BYTESZ] = {0};
+    uint8_t pk[SIKE_PUB_BYTESZ] = {0};
+    uint8_t ct[SIKE_CT_BYTESZ] = {0};
+    uint8_t ss_enc[SIKE_SS_BYTESZ] = {0};
+    uint8_t ss_dec[SIKE_SS_BYTESZ] = {0};
 
     EXPECT_EQ(SIKE_keypair(sk, pk), 1);
     SIKE_encaps(ss_enc, ct, pk);
 
     // Change cipertext
-    uint8_t ct_tmp[SIKEp503_CT_BYTESZ] = {0};
+    uint8_t ct_tmp[SIKE_CT_BYTESZ] = {0};
     memcpy(ct_tmp, ct, sizeof(ct));
     ct_tmp[0] = ~ct_tmp[0];
     SIKE_decaps(ss_dec, ct_tmp, pk, sk);
-    EXPECT_NE(memcmp(ss_enc, ss_dec, SIKEp503_SS_BYTESZ), 0);
+    EXPECT_NE(memcmp(ss_enc, ss_dec, SIKE_SS_BYTESZ), 0);
 
     // Change secret key
-    uint8_t sk_tmp[SIKEp503_PRV_BYTESZ] = {0};
+    uint8_t sk_tmp[SIKE_PRV_BYTESZ] = {0};
     memcpy(sk_tmp, sk, sizeof(sk));
     sk_tmp[0] = ~sk_tmp[0];
     SIKE_decaps(ss_dec, ct, pk, sk_tmp);
-    EXPECT_NE(memcmp(ss_enc, ss_dec, SIKEp503_SS_BYTESZ), 0);
+    EXPECT_NE(memcmp(ss_enc, ss_dec, SIKE_SS_BYTESZ), 0);
 
     // Change public key
-    uint8_t pk_tmp[SIKEp503_PUB_BYTESZ] = {0};
+    uint8_t pk_tmp[SIKE_PUB_BYTESZ] = {0};
     memcpy(pk_tmp, pk, sizeof(pk));
     pk_tmp[0] = ~pk_tmp[0];
     SIKE_decaps(ss_dec, ct, pk_tmp, sk);
-    EXPECT_NE(memcmp(ss_enc, ss_dec, SIKEp503_SS_BYTESZ), 0);
+    EXPECT_NE(memcmp(ss_enc, ss_dec, SIKE_SS_BYTESZ), 0);
 }
 
 TEST(SIKE, Unaligned) {
-  alignas(4) uint8_t priv[SIKEp503_PRV_BYTESZ + 1];
-  alignas(4) uint8_t pub[SIKEp503_PUB_BYTESZ + 1];
-  alignas(4) uint8_t shared_key1[SIKEp503_SS_BYTESZ + 1];
-  alignas(4) uint8_t ciphertext[SIKEp503_CT_BYTESZ + 1];
-  alignas(4) uint8_t shared_key2[SIKEp503_SS_BYTESZ + 1];
+  alignas(4) uint8_t priv[SIKE_PRV_BYTESZ + 1];
+  alignas(4) uint8_t pub[SIKE_PUB_BYTESZ + 1];
+  alignas(4) uint8_t shared_key1[SIKE_SS_BYTESZ + 1];
+  alignas(4) uint8_t ciphertext[SIKE_CT_BYTESZ + 1];
+  alignas(4) uint8_t shared_key2[SIKE_SS_BYTESZ + 1];
 
   ASSERT_TRUE(SIKE_keypair(priv + 1, pub + 1));
   SIKE_encaps(shared_key1 + 1, ciphertext + 1, pub + 1);
   SIKE_decaps(shared_key2 + 1, ciphertext + 1, pub + 1, priv + 1);
 
-  EXPECT_EQ(memcmp(shared_key1 + 1, shared_key2 + 1, SIKEp503_SS_BYTESZ), 0);
+  EXPECT_EQ(memcmp(shared_key1 + 1, shared_key2 + 1, SIKE_SS_BYTESZ), 0);
 }
 
 #if defined(SUPPORTS_ABI_TEST) && (defined(OPENSSL_X86_64) || defined(OPENSSL_AARCH64))

@@ -18,19 +18,19 @@
 #include "isogeny.h"
 #include "fpx.h"
 
-extern const struct params_t p503;
+extern const struct params_t params;
 
 // Domain separation parameters for HMAC
 static const uint8_t G[2] = {0,0};
 static const uint8_t H[2] = {1,0};
 static const uint8_t F[2] = {2,0};
 
-// SIDHp503_JINV_BYTESZ is a number of bytes used for encoding j-invariant.
-#define SIDHp503_JINV_BYTESZ    126U
-// SIDHp503_PRV_A_BITSZ is a number of bits of SIDH private key (2-isogeny)
-#define SIDHp503_PRV_A_BITSZ    250U
-// SIDHp503_PRV_A_BITSZ is a number of bits of SIDH private key (3-isogeny)
-#define SIDHp503_PRV_B_BITSZ    253U
+// SIDH_JINV_BYTESZ is a number of bytes used for encoding j-invariant.
+#define SIDH_JINV_BYTESZ    126U
+// SIDH_PRV_A_BITSZ is a number of bits of SIDH private key (2-isogeny)
+#define SIDH_PRV_A_BITSZ    250U
+// SIDH_PRV_A_BITSZ is a number of bits of SIDH private key (3-isogeny)
+#define SIDH_PRV_B_BITSZ    253U
 // MAX_INT_POINTS_ALICE is a number of points used in 2-isogeny tree computation
 #define MAX_INT_POINTS_ALICE    7U
 // MAX_INT_POINTS_ALICE is a number of points used in 3-isogeny tree computation
@@ -112,10 +112,10 @@ static void LADDER3PT(
     crypto_word_t mask;
     int bit, swap, prevbit = 0;
 
-    const size_t nbits = is_A?SIDHp503_PRV_A_BITSZ:SIDHp503_PRV_B_BITSZ;
+    const size_t nbits = is_A?SIDH_PRV_A_BITSZ:SIDH_PRV_B_BITSZ;
 
     // Initializing constant
-    sike_fpcopy(p503.mont_one, A24[0].c0);
+    sike_fpcopy(params.mont_one, A24[0].c0);
     sike_fp2add(A24, A24, A24);
     sike_fp2add(A, A24, A24);
     sike_fp2div2(A24, A24);
@@ -123,11 +123,11 @@ static void LADDER3PT(
 
     // Initializing points
     sike_fp2copy(xQ, R0->X);
-    sike_fpcopy(p503.mont_one, R0->Z[0].c0);
+    sike_fpcopy(params.mont_one, R0->Z[0].c0);
     sike_fp2copy(xPQ, R2->X);
-    sike_fpcopy(p503.mont_one, R2->Z[0].c0);
+    sike_fpcopy(params.mont_one, R2->Z[0].c0);
     sike_fp2copy(xP, R->X);
-    sike_fpcopy(p503.mont_one, R->Z[0].c0);
+    sike_fpcopy(params.mont_one, R->Z[0].c0);
     memset(R->Z->c1, 0, sizeof(R->Z->c1));
 
     // Main loop
@@ -195,14 +195,14 @@ static void gen_iso_A(const uint8_t* skA, uint8_t* pkA)
     unsigned int m, index = 0, pts_index[MAX_INT_POINTS_ALICE], npts = 0, ii = 0;
 
     // Initialize basis points
-    sike_init_basis(p503.A_gen, XPA, XQA, XRA);
-    sike_init_basis(p503.B_gen, phiP->X, phiQ->X, phiR->X);
-    sike_fpcopy(p503.mont_one, (phiP->Z)->c0);
-    sike_fpcopy(p503.mont_one, (phiQ->Z)->c0);
-    sike_fpcopy(p503.mont_one, (phiR->Z)->c0);
+    sike_init_basis(params.A_gen, XPA, XQA, XRA);
+    sike_init_basis(params.B_gen, phiP->X, phiQ->X, phiR->X);
+    sike_fpcopy(params.mont_one, (phiP->Z)->c0);
+    sike_fpcopy(params.mont_one, (phiQ->Z)->c0);
+    sike_fpcopy(params.mont_one, (phiR->Z)->c0);
 
     // Initialize constants
-    sike_fpcopy(p503.mont_one, A24plus->c0);
+    sike_fpcopy(params.mont_one, A24plus->c0);
     sike_fp2add(A24plus, A24plus, C24);
 
     // Retrieve kernel point
@@ -215,7 +215,7 @@ static void gen_iso_A(const uint8_t* skA, uint8_t* pkA)
             sike_fp2copy(R->X, pts[npts]->X);
             sike_fp2copy(R->Z, pts[npts]->Z);
             pts_index[npts++] = index;
-            m = p503.A_strat[ii++];
+            m = params.A_strat[ii++];
             xDBLe(R, R, A24plus, C24, (2*m));
             index += m;
         }
@@ -246,8 +246,8 @@ static void gen_iso_A(const uint8_t* skA, uint8_t* pkA)
 
     // Format public key
     sike_fp2_encode(phiP->X, pkA);
-    sike_fp2_encode(phiQ->X, pkA + SIDHp503_JINV_BYTESZ);
-    sike_fp2_encode(phiR->X, pkA + 2*SIDHp503_JINV_BYTESZ);
+    sike_fp2_encode(phiQ->X, pkA + SIDH_JINV_BYTESZ);
+    sike_fp2_encode(phiR->X, pkA + 2*SIDH_JINV_BYTESZ);
 }
 
 // Bob's ephemeral key-pair generation
@@ -267,14 +267,14 @@ static void gen_iso_B(const uint8_t* skB, uint8_t* pkB)
     unsigned int m, index = 0, pts_index[MAX_INT_POINTS_BOB], npts = 0, ii = 0;
 
     // Initialize basis points
-    sike_init_basis(p503.B_gen, XPB, XQB, XRB);
-    sike_init_basis(p503.A_gen, phiP->X, phiQ->X, phiR->X);
-    sike_fpcopy(p503.mont_one, (phiP->Z)->c0);
-    sike_fpcopy(p503.mont_one, (phiQ->Z)->c0);
-    sike_fpcopy(p503.mont_one, (phiR->Z)->c0);
+    sike_init_basis(params.B_gen, XPB, XQB, XRB);
+    sike_init_basis(params.A_gen, phiP->X, phiQ->X, phiR->X);
+    sike_fpcopy(params.mont_one, (phiP->Z)->c0);
+    sike_fpcopy(params.mont_one, (phiQ->Z)->c0);
+    sike_fpcopy(params.mont_one, (phiR->Z)->c0);
 
     // Initialize constants
-    sike_fpcopy(p503.mont_one, A24plus->c0);
+    sike_fpcopy(params.mont_one, A24plus->c0);
     sike_fp2add(A24plus, A24plus, A24plus);
     sike_fp2copy(A24plus, A24minus);
     sike_fp2neg(A24minus);
@@ -289,7 +289,7 @@ static void gen_iso_B(const uint8_t* skB, uint8_t* pkB)
             sike_fp2copy(R->X, pts[npts]->X);
             sike_fp2copy(R->Z, pts[npts]->Z);
             pts_index[npts++] = index;
-            m = p503.B_strat[ii++];
+            m = params.B_strat[ii++];
             xTPLe(R, R, A24minus, A24plus, m);
             index += m;
         }
@@ -320,8 +320,8 @@ static void gen_iso_B(const uint8_t* skB, uint8_t* pkB)
 
     // Format public key
     sike_fp2_encode(phiP->X, pkB);
-    sike_fp2_encode(phiQ->X, pkB + SIDHp503_JINV_BYTESZ);
-    sike_fp2_encode(phiR->X, pkB + 2*SIDHp503_JINV_BYTESZ);
+    sike_fp2_encode(phiQ->X, pkB + SIDH_JINV_BYTESZ);
+    sike_fp2_encode(phiR->X, pkB + 2*SIDH_JINV_BYTESZ);
 }
 
 // Alice's ephemeral shared secret computation
@@ -340,12 +340,12 @@ static void ex_iso_A(const uint8_t* skA, const uint8_t* pkB, uint8_t* ssA)
 
     // Initialize images of Bob's basis
     fp2_decode(pkB, PKB[0]);
-    fp2_decode(pkB + SIDHp503_JINV_BYTESZ, PKB[1]);
-    fp2_decode(pkB + 2*SIDHp503_JINV_BYTESZ, PKB[2]);
+    fp2_decode(pkB + SIDH_JINV_BYTESZ, PKB[1]);
+    fp2_decode(pkB + 2*SIDH_JINV_BYTESZ, PKB[2]);
 
     // Initialize constants
     get_A(PKB[0], PKB[1], PKB[2], A); // TODO: Can return projective A?
-    sike_fpadd(p503.mont_one, p503.mont_one, C24->c0);
+    sike_fpadd(params.mont_one, params.mont_one, C24->c0);
     sike_fp2add(A, C24, A24plus);
     sike_fpadd(C24->c0, C24->c0, C24->c0);
 
@@ -359,7 +359,7 @@ static void ex_iso_A(const uint8_t* skA, const uint8_t* pkB, uint8_t* ssA)
             sike_fp2copy(R->X, pts[npts]->X);
             sike_fp2copy(R->Z, pts[npts]->Z);
             pts_index[npts++] = index;
-            m = p503.A_strat[ii++];
+            m = params.A_strat[ii++];
             xDBLe(R, R, A24plus, C24, (2*m));
             index += m;
         }
@@ -399,12 +399,12 @@ static void ex_iso_B(const uint8_t* skB, const uint8_t* pkA, uint8_t* ssB)
 
     // Initialize images of Alice's basis
     fp2_decode(pkA, PKB[0]);
-    fp2_decode(pkA + SIDHp503_JINV_BYTESZ, PKB[1]);
-    fp2_decode(pkA + 2*SIDHp503_JINV_BYTESZ, PKB[2]);
+    fp2_decode(pkA + SIDH_JINV_BYTESZ, PKB[1]);
+    fp2_decode(pkA + 2*SIDH_JINV_BYTESZ, PKB[2]);
 
     // Initialize constants
     get_A(PKB[0], PKB[1], PKB[2], A);
-    sike_fpadd(p503.mont_one, p503.mont_one, A24minus->c0);
+    sike_fpadd(params.mont_one, params.mont_one, A24minus->c0);
     sike_fp2add(A, A24minus, A24plus);
     sike_fp2sub(A, A24minus, A24minus);
 
@@ -418,7 +418,7 @@ static void ex_iso_B(const uint8_t* skB, const uint8_t* pkA, uint8_t* ssB)
             sike_fp2copy(R->X, pts[npts]->X);
             sike_fp2copy(R->Z, pts[npts]->Z);
             pts_index[npts++] = index;
-            m = p503.B_strat[ii++];
+            m = params.B_strat[ii++];
             xTPLe(R, R, A24minus, A24plus, m);
             index += m;
         }
@@ -442,17 +442,17 @@ static void ex_iso_B(const uint8_t* skB, const uint8_t* pkA, uint8_t* ssB)
     sike_fp2_encode(jinv, ssB);
 }
 
-int SIKE_keypair(uint8_t out_priv[SIKEp503_PRV_BYTESZ],
-                 uint8_t out_pub[SIKEp503_PUB_BYTESZ]) {
+int SIKE_keypair(uint8_t out_priv[SIKE_PRV_BYTESZ],
+                 uint8_t out_pub[SIKE_PUB_BYTESZ]) {
   int ret = 0;
 
   // Calculate private key for Alice. Needs to be in range [0, 2^0xFA - 1] and <
   // 253 bits
   BIGNUM *bn_sidh_prv = BN_new();
   if (!bn_sidh_prv ||
-      !BN_rand(bn_sidh_prv, SIDHp503_PRV_B_BITSZ, BN_RAND_TOP_ONE,
+      !BN_rand(bn_sidh_prv, SIDH_PRV_B_BITSZ, BN_RAND_TOP_ONE,
                BN_RAND_BOTTOM_ANY) ||
-      !BN_bn2le_padded(out_priv, BITS_TO_BYTES(SIDHp503_PRV_B_BITSZ),
+      !BN_bn2le_padded(out_priv, BITS_TO_BYTES(SIDH_PRV_B_BITSZ),
                        bn_sidh_prv)) {
     goto end;
   }
@@ -465,28 +465,28 @@ end:
   return ret;
 }
 
-void SIKE_encaps(uint8_t out_shared_key[SIKEp503_SS_BYTESZ],
-                 uint8_t out_ciphertext[SIKEp503_CT_BYTESZ],
-                 const uint8_t pub_key[SIKEp503_PUB_BYTESZ]) {
+void SIKE_encaps(uint8_t out_shared_key[SIKE_SS_BYTESZ],
+                 uint8_t out_ciphertext[SIKE_CT_BYTESZ],
+                 const uint8_t pub_key[SIKE_PUB_BYTESZ]) {
   // Secret buffer is reused by the function to store some ephemeral
   // secret data. It's size must be maximum of SHA256_CBLOCK,
-  // SIKEp503_MSG_BYTESZ and SIDHp503_PRV_A_BITSZ in bytes.
+  // SIKE_MSG_BYTESZ and SIDH_PRV_A_BITSZ in bytes.
   uint8_t secret[SHA256_CBLOCK];
-  uint8_t j[SIDHp503_JINV_BYTESZ];
-  uint8_t temp[SIKEp503_MSG_BYTESZ + SIKEp503_CT_BYTESZ];
+  uint8_t j[SIDH_JINV_BYTESZ];
+  uint8_t temp[SIKE_MSG_BYTESZ + SIKE_CT_BYTESZ];
   SHA256_CTX ctx;
 
   // Generate secret key for A
-  // secret key A = HMAC({0,1}^n || pub_key), G) mod SIDHp503_PRV_A_BITSZ
-  RAND_bytes(temp, SIKEp503_MSG_BYTESZ);
+  // secret key A = HMAC({0,1}^n || pub_key), G) mod SIDH_PRV_A_BITSZ
+  RAND_bytes(temp, SIKE_MSG_BYTESZ);
 
   SHA256_Init(&ctx);
-  SHA256_Update(&ctx, temp, SIKEp503_MSG_BYTESZ);
-  SHA256_Update(&ctx, pub_key, SIKEp503_PUB_BYTESZ);
+  SHA256_Update(&ctx, temp, SIKE_MSG_BYTESZ);
+  SHA256_Update(&ctx, pub_key, SIKE_PUB_BYTESZ);
   SHA256_Final(secret, &ctx);
-  hmac_sum(secret, BITS_TO_BYTES(SIDHp503_PRV_A_BITSZ), G, secret);
-  secret[BITS_TO_BYTES(SIDHp503_PRV_A_BITSZ) - 1] &=
-      (1 << (SIDHp503_PRV_A_BITSZ % 8)) - 1;
+  hmac_sum(secret, BITS_TO_BYTES(SIDH_PRV_A_BITSZ), G, secret);
+  secret[BITS_TO_BYTES(SIDH_PRV_A_BITSZ) - 1] &=
+      (1 << (SIDH_PRV_A_BITSZ % 8)) - 1;
 
   // Generate public key for A - first part of the ciphertext
   gen_iso_A(secret, out_ciphertext);
@@ -498,37 +498,37 @@ void SIKE_encaps(uint8_t out_shared_key[SIKEp503_SS_BYTESZ],
   SHA256_Init(&ctx);
   SHA256_Update(&ctx, j, sizeof(j));
   SHA256_Final(secret, &ctx);
-  hmac_sum(secret, SIKEp503_MSG_BYTESZ, F, secret);
+  hmac_sum(secret, SIKE_MSG_BYTESZ, F, secret);
 
   // c1 = h ^ m
-  uint8_t *c1 = &out_ciphertext[SIKEp503_PUB_BYTESZ];
-  for (size_t i = 0; i < SIKEp503_MSG_BYTESZ; i++) {
+  uint8_t *c1 = &out_ciphertext[SIKE_PUB_BYTESZ];
+  for (size_t i = 0; i < SIKE_MSG_BYTESZ; i++) {
     c1[i] = temp[i] ^ secret[i];
   }
 
   SHA256_Init(&ctx);
-  SHA256_Update(&ctx, temp, SIKEp503_MSG_BYTESZ);
-  SHA256_Update(&ctx, out_ciphertext, SIKEp503_CT_BYTESZ);
+  SHA256_Update(&ctx, temp, SIKE_MSG_BYTESZ);
+  SHA256_Update(&ctx, out_ciphertext, SIKE_CT_BYTESZ);
   SHA256_Final(secret, &ctx);
   // Generate shared secret out_shared_key = HMAC(m||out_ciphertext, F)
-  hmac_sum(out_shared_key, SIKEp503_SS_BYTESZ, H, secret);
+  hmac_sum(out_shared_key, SIKE_SS_BYTESZ, H, secret);
 }
 
-void SIKE_decaps(uint8_t out_shared_key[SIKEp503_SS_BYTESZ],
-                 const uint8_t ciphertext[SIKEp503_CT_BYTESZ],
-                 const uint8_t pub_key[SIKEp503_PUB_BYTESZ],
-                 const uint8_t priv_key[SIKEp503_PRV_BYTESZ]) {
+void SIKE_decaps(uint8_t out_shared_key[SIKE_SS_BYTESZ],
+                 const uint8_t ciphertext[SIKE_CT_BYTESZ],
+                 const uint8_t pub_key[SIKE_PUB_BYTESZ],
+                 const uint8_t priv_key[SIKE_PRV_BYTESZ]) {
   // Secret buffer is reused by the function to store some ephemeral
   // secret data. It's size must be maximum of SHA256_CBLOCK,
-  // SIKEp503_MSG_BYTESZ and SIDHp503_PRV_A_BITSZ in bytes.
+  // SIKE_MSG_BYTESZ and SIDH_PRV_A_BITSZ in bytes.
   uint8_t secret[SHA256_CBLOCK];
-  uint8_t j[SIDHp503_JINV_BYTESZ];
-  uint8_t c0[SIKEp503_PUB_BYTESZ];
-  uint8_t temp[SIKEp503_MSG_BYTESZ];
-  uint8_t shared_nok[SIKEp503_MSG_BYTESZ];
+  uint8_t j[SIDH_JINV_BYTESZ];
+  uint8_t c0[SIKE_PUB_BYTESZ];
+  uint8_t temp[SIKE_MSG_BYTESZ];
+  uint8_t shared_nok[SIKE_MSG_BYTESZ];
   SHA256_CTX ctx;
 
-  RAND_bytes(shared_nok, SIKEp503_MSG_BYTESZ);
+  RAND_bytes(shared_nok, SIKE_MSG_BYTESZ);
 
   // Recover m
   // Let ciphertext = c0 || c1 - both have fixed sizes
@@ -538,34 +538,34 @@ void SIKE_decaps(uint8_t out_shared_key[SIKEp503_SS_BYTESZ],
   SHA256_Init(&ctx);
   SHA256_Update(&ctx, j, sizeof(j));
   SHA256_Final(secret, &ctx);
-  hmac_sum(secret, SIKEp503_MSG_BYTESZ, F, secret);
+  hmac_sum(secret, SIKE_MSG_BYTESZ, F, secret);
 
   const uint8_t *c1 = &ciphertext[sizeof(c0)];
-  for (size_t i = 0; i < SIKEp503_MSG_BYTESZ; i++) {
+  for (size_t i = 0; i < SIKE_MSG_BYTESZ; i++) {
     temp[i] = c1[i] ^ secret[i];
   }
 
   SHA256_Init(&ctx);
-  SHA256_Update(&ctx, temp, SIKEp503_MSG_BYTESZ);
-  SHA256_Update(&ctx, pub_key, SIKEp503_PUB_BYTESZ);
+  SHA256_Update(&ctx, temp, SIKE_MSG_BYTESZ);
+  SHA256_Update(&ctx, pub_key, SIKE_PUB_BYTESZ);
   SHA256_Final(secret, &ctx);
-  hmac_sum(secret, BITS_TO_BYTES(SIDHp503_PRV_A_BITSZ), G, secret);
+  hmac_sum(secret, BITS_TO_BYTES(SIDH_PRV_A_BITSZ), G, secret);
 
   // Recover secret key A = G(m||pub_key) mod
-  secret[BITS_TO_BYTES(SIDHp503_PRV_A_BITSZ) - 1] &=
-      (1 << (SIDHp503_PRV_A_BITSZ % 8)) - 1;
+  secret[BITS_TO_BYTES(SIDH_PRV_A_BITSZ) - 1] &=
+      (1 << (SIDH_PRV_A_BITSZ % 8)) - 1;
 
   // Recover c0 = public key A
   gen_iso_A(secret, c0);
   crypto_word_t ok = constant_time_is_zero_w(
-      CRYPTO_memcmp(c0, ciphertext, SIKEp503_PUB_BYTESZ));
-  for (size_t i = 0; i < SIKEp503_MSG_BYTESZ; i++) {
+      CRYPTO_memcmp(c0, ciphertext, SIKE_PUB_BYTESZ));
+  for (size_t i = 0; i < SIKE_MSG_BYTESZ; i++) {
     temp[i] = constant_time_select_8(ok, temp[i], shared_nok[i]);
   }
 
   SHA256_Init(&ctx);
-  SHA256_Update(&ctx, temp, SIKEp503_MSG_BYTESZ);
-  SHA256_Update(&ctx, ciphertext, SIKEp503_CT_BYTESZ);
+  SHA256_Update(&ctx, temp, SIKE_MSG_BYTESZ);
+  SHA256_Update(&ctx, ciphertext, SIKE_CT_BYTESZ);
   SHA256_Final(secret, &ctx);
-  hmac_sum(out_shared_key, SIKEp503_SS_BYTESZ, H, secret);
+  hmac_sum(out_shared_key, SIKE_SS_BYTESZ, H, secret);
 }
