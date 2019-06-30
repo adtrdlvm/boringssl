@@ -296,7 +296,7 @@ static bool SpeedRSAKeyGen(const std::string &selected) {
   return true;
 }
 
-static bool SpeedSIKEP503(const std::string &selected) {
+static bool SpeedSIKEP434(const std::string &selected) {
   if (!selected.empty() && selected.find("SIKE") == std::string::npos) {
     return true;
   }
@@ -312,7 +312,7 @@ static bool SpeedSIKEP503(const std::string &selected) {
                 [&private_SIKE, &public_SIKE]() -> bool {
       return (SIKE_keypair(private_SIKE, public_SIKE) == 1);
     });
-    results.Print("SIKE/P503 generate");
+    results.Print("SIKE/P434 generate");
   }
 
   if (!res) {
@@ -328,7 +328,7 @@ static bool SpeedSIKEP503(const std::string &selected) {
       SIKE_encaps(ss, ct, public_SIKE);
       return true;
     });
-    results.Print("SIKE/P503 encap");
+    results.Print("SIKE/P434 encap");
   }
 
   if (!res) {
@@ -344,7 +344,7 @@ static bool SpeedSIKEP503(const std::string &selected) {
       SIKE_decaps(ss, ct, public_SIKE, private_SIKE);
       return true;
     });
-    results.Print("SIKE/P503 decap");
+    results.Print("SIKE/P434 decap");
   }
 
   if (!res) {
@@ -998,7 +998,7 @@ bool Speed(const std::vector<std::string> &args) {
       !SpeedECDH(selected) ||
       !SpeedECDSA(selected) ||
       !Speed25519(selected) ||
-      !SpeedSIKEP503(selected) ||
+      !SpeedSIKEP434(selected) ||
       !SpeedSPAKE2(selected) ||
       !SpeedScrypt(selected) ||
       !SpeedRSAKeyGen(selected) ||
