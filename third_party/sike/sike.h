@@ -17,7 +17,7 @@ extern "C" {
 /* SIKE
  *
  * SIKE is a isogeny based post-quantum key encapsulation mechanism. Description of the
- * algorithm is provided in [SIKE]. This implementation uses 503-bit field size. The code
+ * algorithm is provided in [SIKE]. This implementation uses 434-bit field size. The code
  * is based on "Additional_Implementations" from PQC NIST submission package which can
  * be found here:
  * https://csrc.nist.gov/CSRC/media/Projects/Post-Quantum-Cryptography/documents/round-1/submissions/SIKE.zip
@@ -26,14 +26,14 @@ extern "C" {
  */
 
 // SIKE_PUB_BYTESZ is the number of bytes in a public key.
-#define SIKE_PUB_BYTESZ 378
+#define SIKE_PUB_BYTESZ 330
 // SIKE_PRV_BYTESZ is the number of bytes in a private key.
-#define SIKE_PRV_BYTESZ 32
+#define SIKE_PRV_BYTESZ 28
 // SIKE_SS_BYTESZ is the number of bytes in a shared key.
 #define SIKE_SS_BYTESZ  16
 // SIKE_MSG_BYTESZ is the number of bytes in a random bit string concatenated
 // with the public key (see 1.4 of SIKE).
-#define SIKE_MSG_BYTESZ 24
+#define SIKE_MSG_BYTESZ 16
 // SIKE_SS_BYTESZ is the number of bytes in a ciphertext.
 #define SIKE_CT_BYTESZ  (SIKE_PUB_BYTESZ + SIKE_MSG_BYTESZ)
 

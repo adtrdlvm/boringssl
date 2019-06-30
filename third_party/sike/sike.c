@@ -20,55 +20,16 @@
 
 extern const struct params_t params;
 
-// Domain separation parameters for HMAC
-static const uint8_t G[2] = {0,0};
-static const uint8_t H[2] = {1,0};
-static const uint8_t F[2] = {2,0};
-
 // SIDH_JINV_BYTESZ is a number of bytes used for encoding j-invariant.
-#define SIDH_JINV_BYTESZ    126U
+#define SIDH_JINV_BYTESZ    110U
 // SIDH_PRV_A_BITSZ is a number of bits of SIDH private key (2-isogeny)
-#define SIDH_PRV_A_BITSZ    250U
+#define SIDH_PRV_A_BITSZ    216U
 // SIDH_PRV_A_BITSZ is a number of bits of SIDH private key (3-isogeny)
-#define SIDH_PRV_B_BITSZ    253U
+#define SIDH_PRV_B_BITSZ    217U
 // MAX_INT_POINTS_ALICE is a number of points used in 2-isogeny tree computation
 #define MAX_INT_POINTS_ALICE    7U
 // MAX_INT_POINTS_ALICE is a number of points used in 3-isogeny tree computation
 #define MAX_INT_POINTS_BOB      8U
-
-// Produces HMAC-SHA256 of data |S| mac'ed with the key |key|. Result is stored in |out|
-// which must have size of at least |outsz| bytes and must be not bigger than
-// SHA256_DIGEST_LENGTH. The output of a HMAC may be truncated.
-// The |key| buffer is reused by the hmac_sum and hence, it's size must be equal
-// to SHA256_CBLOCK. The HMAC key provided in |key| buffer must be smaller or equal
-// to SHA256_DIGHEST_LENTH. |key| can overlap |out|.
-static void hmac_sum(
-    uint8_t *out, size_t outsz, const uint8_t S[2], uint8_t key[SHA256_CBLOCK]) {
-    for(size_t i=0; i<SHA256_DIGEST_LENGTH; i++) {
-        key[i] = key[i] ^ 0x36;
-    }
-    // set rest of the buffer to ipad = 0x36
-    memset(&key[SHA256_DIGEST_LENGTH], 0x36, SHA256_CBLOCK - SHA256_DIGEST_LENGTH);
-
-    SHA256_CTX ctx;
-    SHA256_Init(&ctx);
-    SHA256_Update(&ctx, key, SHA256_CBLOCK);
-    SHA256_Update(&ctx, S, 2);
-    uint8_t digest[SHA256_DIGEST_LENGTH];
-    SHA256_Final(digest, &ctx);
-
-    // XOR key with an opad = 0x5C
-    for(size_t i=0; i<SHA256_CBLOCK; i++) {
-        key[i] = key[i] ^ 0x36 ^ 0x5C;
-    }
-
-    SHA256_Init(&ctx);
-    SHA256_Update(&ctx, key, SHA256_CBLOCK);
-    SHA256_Update(&ctx, digest, SHA256_DIGEST_LENGTH);
-    SHA256_Final(digest, &ctx);
-    assert(outsz <= sizeof(digest));
-    memcpy(out, digest, outsz);
-}
 
 // Swap points.
 // If option = 0 then P <- P and Q <- Q, else if option = 0xFF...FF then P <- Q and Q <- P
@@ -104,7 +65,7 @@ static inline void sike_fp2cswap(point_proj_t P, point_proj_t Q, const crypto_wo
 #endif
 }
 
-static void LADDER3PT(
+static void ladder3Pt(
     const f2elm_t xP, const f2elm_t xQ, const f2elm_t xPQ, const uint8_t* m,
     int is_A, point_proj_t R, const f2elm_t A) {
     point_proj_t R0 = POINT_PROJ_INIT, R2 = POINT_PROJ_INIT;
@@ -141,6 +102,9 @@ static void LADDER3PT(
         xDBLADD(R0, R2, R->X, A24);
         sike_fp2mul_mont(R2->X, R->Z, R2->X);
     }
+    swap = 0 ^ prevbit;
+    mask = 0 - (crypto_word_t)swap;
+    sike_fp2cswap(R, R2, mask);
 }
 
 // Initialization of basis points
@@ -148,9 +112,9 @@ static inline void sike_init_basis(const crypto_word_t *gen, f2elm_t XP, f2elm_t
     sike_fpcopy(gen,                  XP->c0);
     sike_fpcopy(gen +   NWORDS_FIELD, XP->c1);
     sike_fpcopy(gen + 2*NWORDS_FIELD, XQ->c0);
-    memset(XQ->c1, 0, sizeof(XQ->c1));
-    sike_fpcopy(gen + 3*NWORDS_FIELD, XR->c0);
-    sike_fpcopy(gen + 4*NWORDS_FIELD, XR->c1);
+    sike_fpcopy(gen + 3*NWORDS_FIELD, XQ->c1);
+    sike_fpcopy(gen + 4*NWORDS_FIELD, XR->c0);
+    sike_fpcopy(gen + 5*NWORDS_FIELD, XR->c1);
 }
 
 // Conversion of GF(p^2) element from Montgomery to standard representation.
@@ -201,12 +165,15 @@ static void gen_iso_A(const uint8_t* skA, uint8_t* pkA)
     sike_fpcopy(params.mont_one, (phiQ->Z)->c0);
     sike_fpcopy(params.mont_one, (phiR->Z)->c0);
 
-    // Initialize constants
+    // Initialize constants: A24plus = A+2C, C24 = 4C, where A=6, C=1
     sike_fpcopy(params.mont_one, A24plus->c0);
+    sike_fp2add(A24plus, A24plus, A24plus);
     sike_fp2add(A24plus, A24plus, C24);
+    sike_fp2add(A24plus, C24, A);
+    sike_fp2add(C24, C24, A24plus);
 
     // Retrieve kernel point
-    LADDER3PT(XPA, XQA, XRA, skA, 1, R, A);
+    ladder3Pt(XPA, XQA, XRA, skA, 1, R, A);
 
     // Traverse tree
     index = 0;
@@ -273,14 +240,15 @@ static void gen_iso_B(const uint8_t* skB, uint8_t* pkB)
     sike_fpcopy(params.mont_one, (phiQ->Z)->c0);
     sike_fpcopy(params.mont_one, (phiR->Z)->c0);
 
-    // Initialize constants
+    // Initialize constants: A24minus = A-2C, A24plus = A+2C, where A=6, C=1
     sike_fpcopy(params.mont_one, A24plus->c0);
     sike_fp2add(A24plus, A24plus, A24plus);
-    sike_fp2copy(A24plus, A24minus);
-    sike_fp2neg(A24minus);
+    sike_fp2add(A24plus, A24plus, A24minus);
+    sike_fp2add(A24plus, A24minus, A);
+    sike_fp2add(A24minus, A24minus, A24plus);
 
     // Retrieve kernel point
-    LADDER3PT(XPB, XQB, XRB, skB, 0, R, A);
+    ladder3Pt(XPB, XQB, XRB, skB, 0, R, A);
 
     // Traverse tree
     index = 0;
@@ -344,13 +312,13 @@ static void ex_iso_A(const uint8_t* skA, const uint8_t* pkB, uint8_t* ssA)
     fp2_decode(pkB + 2*SIDH_JINV_BYTESZ, PKB[2]);
 
     // Initialize constants
-    get_A(PKB[0], PKB[1], PKB[2], A); // TODO: Can return projective A?
+    get_A(PKB[0], PKB[1], PKB[2], A);
     sike_fpadd(params.mont_one, params.mont_one, C24->c0);
     sike_fp2add(A, C24, A24plus);
     sike_fpadd(C24->c0, C24->c0, C24->c0);
 
     // Retrieve kernel point
-    LADDER3PT(PKB[0], PKB[1], PKB[2], skA, 1, R, A);
+    ladder3Pt(PKB[0], PKB[1], PKB[2], skA, 1, R, A);
 
     // Traverse tree
     index = 0;
@@ -376,9 +344,9 @@ static void ex_iso_A(const uint8_t* skA, const uint8_t* pkB, uint8_t* ssA)
     }
 
     get_4_isog(R, A24plus, C24, coeff);
-    sike_fp2div2(C24, C24);
+    sike_fp2add(A24plus, A24plus, A24plus);
     sike_fp2sub(A24plus, C24, A24plus);
-    sike_fp2div2(C24, C24);
+    sike_fp2add(A24plus, A24plus, A24plus);
     j_inv(A24plus, C24, jinv);
     sike_fp2_encode(jinv, ssA);
 }
@@ -409,7 +377,7 @@ static void ex_iso_B(const uint8_t* skB, const uint8_t* pkA, uint8_t* ssB)
     sike_fp2sub(A, A24minus, A24minus);
 
     // Retrieve kernel point
-    LADDER3PT(PKB[0], PKB[1], PKB[2], skB, 0, R, A);
+    ladder3Pt(PKB[0], PKB[1], PKB[2], skB, 0, R, A);
 
     // Traverse tree
     index = 0;
@@ -477,28 +445,24 @@ void SIKE_encaps(uint8_t out_shared_key[SIKE_SS_BYTESZ],
   SHA256_CTX ctx;
 
   // Generate secret key for A
-  // secret key A = HMAC({0,1}^n || pub_key), G) mod SIDH_PRV_A_BITSZ
+  // secret key A = SHA256({0,1}^n || pub_key)) mod SIDH_PRV_A_BITSZ
   RAND_bytes(temp, SIKE_MSG_BYTESZ);
 
   SHA256_Init(&ctx);
   SHA256_Update(&ctx, temp, SIKE_MSG_BYTESZ);
   SHA256_Update(&ctx, pub_key, SIKE_PUB_BYTESZ);
   SHA256_Final(secret, &ctx);
-  hmac_sum(secret, BITS_TO_BYTES(SIDH_PRV_A_BITSZ), G, secret);
-  secret[BITS_TO_BYTES(SIDH_PRV_A_BITSZ) - 1] &=
-      (1 << (SIDH_PRV_A_BITSZ % 8)) - 1;
 
   // Generate public key for A - first part of the ciphertext
   gen_iso_A(secret, out_ciphertext);
 
   // Generate c1:
-  //  h = HMAC(j-invariant(secret key A, public key B), F)
+  //  h = SHA256(j-invariant)
   // c1 = h ^ m
   ex_iso_A(secret, pub_key, j);
   SHA256_Init(&ctx);
   SHA256_Update(&ctx, j, sizeof(j));
   SHA256_Final(secret, &ctx);
-  hmac_sum(secret, SIKE_MSG_BYTESZ, F, secret);
 
   // c1 = h ^ m
   uint8_t *c1 = &out_ciphertext[SIKE_PUB_BYTESZ];
@@ -510,8 +474,8 @@ void SIKE_encaps(uint8_t out_shared_key[SIKE_SS_BYTESZ],
   SHA256_Update(&ctx, temp, SIKE_MSG_BYTESZ);
   SHA256_Update(&ctx, out_ciphertext, SIKE_CT_BYTESZ);
   SHA256_Final(secret, &ctx);
-  // Generate shared secret out_shared_key = HMAC(m||out_ciphertext, F)
-  hmac_sum(out_shared_key, SIKE_SS_BYTESZ, H, secret);
+  // Generate shared secret out_shared_key = SHA256(m||out_ciphertext)
+  memcpy(out_shared_key, secret, SIKE_SS_BYTESZ);
 }
 
 void SIKE_decaps(uint8_t out_shared_key[SIKE_SS_BYTESZ],
@@ -528,6 +492,7 @@ void SIKE_decaps(uint8_t out_shared_key[SIKE_SS_BYTESZ],
   uint8_t shared_nok[SIKE_MSG_BYTESZ];
   SHA256_CTX ctx;
 
+  // This is OK as we are only using ephemeral keys in BoringSSL
   RAND_bytes(shared_nok, SIKE_MSG_BYTESZ);
 
   // Recover m
@@ -538,7 +503,6 @@ void SIKE_decaps(uint8_t out_shared_key[SIKE_SS_BYTESZ],
   SHA256_Init(&ctx);
   SHA256_Update(&ctx, j, sizeof(j));
   SHA256_Final(secret, &ctx);
-  hmac_sum(secret, SIKE_MSG_BYTESZ, F, secret);
 
   const uint8_t *c1 = &ciphertext[sizeof(c0)];
   for (size_t i = 0; i < SIKE_MSG_BYTESZ; i++) {
@@ -549,11 +513,6 @@ void SIKE_decaps(uint8_t out_shared_key[SIKE_SS_BYTESZ],
   SHA256_Update(&ctx, temp, SIKE_MSG_BYTESZ);
   SHA256_Update(&ctx, pub_key, SIKE_PUB_BYTESZ);
   SHA256_Final(secret, &ctx);
-  hmac_sum(secret, BITS_TO_BYTES(SIDH_PRV_A_BITSZ), G, secret);
-
-  // Recover secret key A = G(m||pub_key) mod
-  secret[BITS_TO_BYTES(SIDH_PRV_A_BITSZ) - 1] &=
-      (1 << (SIDH_PRV_A_BITSZ % 8)) - 1;
 
   // Recover c0 = public key A
   gen_iso_A(secret, c0);
@@ -567,5 +526,7 @@ void SIKE_decaps(uint8_t out_shared_key[SIKE_SS_BYTESZ],
   SHA256_Update(&ctx, temp, SIKE_MSG_BYTESZ);
   SHA256_Update(&ctx, ciphertext, SIKE_CT_BYTESZ);
   SHA256_Final(secret, &ctx);
-  hmac_sum(out_shared_key, SIKE_SS_BYTESZ, H, secret);
+
+  // Generate shared secret out_shared_key = SHA256(m||ciphertext)
+  memcpy(out_shared_key, secret, SIKE_SS_BYTESZ);
 }
