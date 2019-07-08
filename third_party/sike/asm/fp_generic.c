@@ -50,9 +50,9 @@ static void digit_x_digit(const crypto_word_t a, const crypto_word_t b, crypto_w
 }
 
 void sike_fpadd(const felm_t a, const felm_t b, felm_t c)
-{ // Modular addition, c = a+b mod p503.
-  // Inputs: a, b in [0, 2*p503-1]
-  // Output: c in [0, 2*p503-1]
+{ // Modular addition, c = a+b mod p434.
+  // Inputs: a, b in [0, 2*p434-1]
+  // Output: c in [0, 2*p434-1]
     unsigned int i, carry = 0;
     crypto_word_t mask;
 
@@ -73,9 +73,9 @@ void sike_fpadd(const felm_t a, const felm_t b, felm_t c)
 }
 
 void sike_fpsub(const felm_t a, const felm_t b, felm_t c)
-{ // Modular subtraction, c = a-b mod p503.
-  // Inputs: a, b in [0, 2*p503-1]
-  // Output: c in [0, 2*p503-1]
+{ // Modular subtraction, c = a-b mod p434.
+  // Inputs: a, b in [0, 2*p434-1]
+  // Output: c in [0, 2*p434-1]
     unsigned int i, borrow = 0;
     crypto_word_t mask;
 
@@ -125,9 +125,9 @@ void sike_mpmul(const felm_t a, const felm_t b, dfelm_t c)
 }
 
 void sike_fprdc(const felm_t ma, felm_t mc)
-{ // Efficient Montgomery reduction using comba and exploiting the special form of the prime p503.
-  // mc = ma*R^-1 mod p503x2, where R = 2^512.
-  // If ma < 2^512*p503, the output mc is in the range [0, 2*p503-1].
+{ // Efficient Montgomery reduction using comba and exploiting the special form of the prime p434.
+  // mc = ma*R^-1 mod p434x2, where R = 2^448.
+  // If ma < 2^448*p434, the output mc is in the range [0, 2*p434-1].
   // ma is assumed to be in Montgomery representation.
     unsigned int i, j, carry, count = ZERO_WORDS;
     crypto_word_t UV[2], t = 0, u = 0, v = 0;
