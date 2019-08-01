@@ -430,6 +430,8 @@ static enum ssl_hs_wait_t do_start_connect(SSL_HANDSHAKE *hs) {
     }
   }
 
+  ssl_do_hs_info_callback(ssl, SSL_CB_HANDSHAKE_WRITTEN, 1);
+
   if (!ssl_write_client_hello(hs)) {
     return ssl_hs_error;
   }
@@ -1805,6 +1807,7 @@ enum ssl_hs_wait_t ssl_client_handshake(SSL_HANDSHAKE *hs) {
   }
 
   ssl_do_info_callback(hs->ssl, SSL_CB_HANDSHAKE_DONE, 1);
+  ssl_do_hs_info_callback(hs->ssl, SSL_CB_HANDSHAKE_DONE, 1);
   return ssl_hs_ok;
 }
 

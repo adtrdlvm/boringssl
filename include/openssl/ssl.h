@@ -3764,6 +3764,7 @@ OPENSSL_EXPORT void SSL_set_enforce_rsa_key_usage(SSL *ssl, int enabled);
 #define SSL_CB_CONNECT_EXIT (SSL_ST_CONNECT | SSL_CB_EXIT)
 #define SSL_CB_HANDSHAKE_START 0x10
 #define SSL_CB_HANDSHAKE_DONE 0x20
+#define SSL_CB_HANDSHAKE_WRITTEN 0xCAFE
 
 // SSL_CTX_set_info_callback configures a callback to be run when various
 // events occur during a connection's lifetime. The |type| argument determines
@@ -3809,6 +3810,8 @@ OPENSSL_EXPORT void (*SSL_CTX_get_info_callback(SSL_CTX *ctx))(const SSL *ssl,
 // during a connection's lifetime. See |SSL_CTX_set_info_callback|.
 OPENSSL_EXPORT void SSL_set_info_callback(
     SSL *ssl, void (*cb)(const SSL *ssl, int type, int value));
+OPENSSL_EXPORT void SSL_set_hs_info_callback(
+    SSL *ssl, void (*cb)(const SSL *ssl, int type, int value, void* data), void* data);
 
 // SSL_get_info_callback returns the callback set by |SSL_set_info_callback|.
 OPENSSL_EXPORT void (*SSL_get_info_callback(const SSL *ssl))(const SSL *ssl,

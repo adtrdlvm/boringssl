@@ -378,6 +378,17 @@ void ssl_do_info_callback(const SSL *ssl, int type, int value) {
   }
 }
 
+void ssl_do_hs_info_callback(const SSL *ssl, int type, int value) {
+  void (*cb)(const SSL *ssl, int type, int value, void* data) = NULL;
+  if (ssl->info_hs_callback.cb != NULL) {
+    cb = ssl->info_hs_callback.cb;
+  }
+
+  if (cb != NULL) {
+    cb(ssl, type, value, ssl->info_hs_callback.data);
+  }
+}
+
 void ssl_do_msg_callback(const SSL *ssl, int is_write, int content_type,
                          Span<const uint8_t> in) {
   if (ssl->msg_callback == NULL) {
@@ -2445,6 +2456,13 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx) {
 void SSL_set_info_callback(SSL *ssl,
                            void (*cb)(const SSL *ssl, int type, int value)) {
   ssl->info_callback = cb;
+}
+
+void SSL_set_hs_info_callback(SSL *ssl,
+                           void (*cb)(const SSL *ssl, int type, int value, void *data),
+                           void *data) {
+  ssl->info_hs_callback.cb = cb;
+  ssl->info_hs_callback.data = data;
 }
 
 void (*SSL_get_info_callback(const SSL *ssl))(const SSL *ssl, int type,

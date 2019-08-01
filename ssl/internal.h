@@ -1088,6 +1088,7 @@ void dtls_clear_outgoing_messages(SSL *ssl);
 
 // ssl_do_info_callback calls |ssl|'s info callback, if set.
 void ssl_do_info_callback(const SSL *ssl, int type, int value);
+void ssl_do_hs_info_callback(const SSL *ssl, int type, int value);
 
 // ssl_do_msg_callback calls |ssl|'s message callback, if set.
 void ssl_do_msg_callback(const SSL *ssl, int is_write, int content_type,
@@ -3255,6 +3256,10 @@ struct ssl_st {
   bssl::UniquePtr<SSL_SESSION> session;
 
   void (*info_callback)(const SSL *ssl, int type, int value) = nullptr;
+  struct {
+    void (*cb)(const SSL *ssl, int type, int value, void *data) = nullptr;
+    void* data = nullptr;
+  } info_hs_callback;
 
   bssl::UniquePtr<SSL_CTX> ctx;
 
