@@ -417,6 +417,8 @@ add_library(
   ../third_party/sike/sike.c
   ../third_party/sike/asm/fp_generic.c
 
+  ../third_party/draft_irtf_cfrg_randomness_improvements/randwrap.c
+
   $<TARGET_OBJECTS:fipsmodule>
 
   ${CRYPTO_ARCH_SOURCES}
@@ -519,6 +521,7 @@ add_executable(
   x509v3/tab_test.cc
   x509v3/v3name_test.cc
   ../third_party/sike/sike_test.cc
+  ../third_party/draft_irtf_cfrg_randomness_improvements/randwrawp_test.cc
 
   $<TARGET_OBJECTS:crypto_test_data>
   $<TARGET_OBJECTS:boringssl_gtest_main>
@@ -531,3 +534,10 @@ if(WIN32)
   target_link_libraries(crypto_test ws2_32)
 endif()
 add_dependencies(all_tests crypto_test)
+
+if (RANDOMNESS_IMPROVEMENTS)
+  add_definitions(-DRANDOMNESS_IMPROVEMENTS=1)
+  if (RANDOMNESS_IMPROVEMENTS_CALCULATE_SIGNATURE)
+    add_definitions(-DRANDOMNESS_IMPROVEMENTS_CALCULATE_SIGNATURE=1)
+  endif()
+endif()

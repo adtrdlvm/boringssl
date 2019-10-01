@@ -253,3 +253,11 @@ else()
 
   add_dependencies(fipsmodule global_target)
 endif()
+
+
+if (RANDOMNESS_IMPROVEMENTS)
+  add_definitions(-DRANDOMNESS_IMPROVEMENTS=1)
+  if (RANDOMNESS_IMPROVEMENTS_CALCULATE_SIGNATURE)
+    add_definitions(-DRANDOMNESS_IMPROVEMENTS_CALCULATE_SIGNATURE=1)
+  endif()
+endif()

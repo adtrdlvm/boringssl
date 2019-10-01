@@ -30,6 +30,8 @@
 #include "../../internal.h"
 #include "../delocate.h"
 
+#include "../../../third_party/draft_irtf_cfrg_randomness_improvements/randwrap.h"
+
 
 // It's assumed that the operating system always has an unfailing source of
 // entropy which is accessed via |CRYPTO_sysrand|. (If the operating system
@@ -223,7 +225,7 @@ static void rand_get_seed(struct rand_thread_state *state,
 
 #endif
 
-void RAND_bytes_with_additional_data(uint8_t *out, size_t out_len,
+static void rand_bytes_with_additional_data(uint8_t *out, size_t out_len,
                                      const uint8_t user_additional_data[32]) {
   if (out_len == 0) {
     return;
@@ -337,6 +339,17 @@ void RAND_bytes_with_additional_data(uint8_t *out, size_t out_len,
 
 #if defined(BORINGSSL_FIPS)
   CRYPTO_STATIC_MUTEX_unlock_read(thread_states_list_lock_bss_get());
+#endif
+}
+
+void RAND_bytes_with_additional_data(uint8_t *out, size_t out_len,
+                                     const uint8_t user_additional_data[32]) {
+#ifdef RANDOMNESS_IMPROVEMENTS
+  uint8_t G[32]; // In this instantiation L = 32
+  rand_bytes_with_additional_data(G, 32, user_additional_data);
+  rand_wrap(out, out_len, G, 32);
+#else
+  rand_bytes_with_additional_data(out, out_len, user_additional_data);
 #endif
 }
 
